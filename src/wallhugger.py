@@ -25,12 +25,37 @@ state_dict_ = {
 
 def clbk_laser(msg):
     global regions_
+    translated = []
+    for i in range(0,359):
+      translated.append(msg.ranges[i])
+      if(translated[i] == 0):
+        translated[i] = 10;
     regions_ = {
-        'right':  min(min(msg.ranges[210:270]), 10),
-        'fright': min(min(msg.ranges[271:330]), 10),
-        'front':  min(min(msg.ranges[331:359]),min(msg.ranges[0:30]), 10),
-        'fleft':  min(min(msg.ranges[31:90]), 10),
-        'left':   min(min(msg.ranges[91:150]), 10),
+#        'right':  min(min(msg.ranges[210:270]), 10),
+#        'fright': min(min(msg.ranges[271:330]), 10),
+#        'front':  min(min(msg.ranges[331:359]),min(msg.ranges[0:30]), 10),
+#        'fleft':  min(min(msg.ranges[31:90]), 10),
+#        'left':   min(min(msg.ranges[91:150]), 10),
+
+#        'right':  min(min(translated[210:270]), 10),
+#        'fright': min(min(translated[271:330]), 10),
+#        'front':  min(min(translated[331:359]),min(translated[0:30]), 10),
+#        'fleft':  min(min(translated[31:90]), 10),
+#        'left':   min(min(translated[91:150]), 10),
+
+        'right':  min(min(translated[271:306]), 10),
+        'fright': min(min(translated[307:342]), 10),
+        'front':  min(min(translated[343:359]),min(translated[0:18]), 10),
+        'fleft':  min(min(translated[19:54]), 10),
+        'left':   min(min(translated[55:90]), 10),
+
+
+#        'left':  min(min(translated[210:270]), 10),
+#        'fleft': min(min(translated[271:350]), 10),
+#        'front':  min(min(translated[351:359]),min(translated[0:10]), 10),
+#        'fright':  min(min(translated[11:90]), 10),
+#        'right':   min(min(translated[91:150]), 10),
+
     }
     print regions_
     
@@ -50,7 +75,7 @@ def take_action():
     angular_z = 0
     state_description = ''
     
-    d = 0.75
+    d = 0.4
     
     if regions['front'] > d and regions['fleft'] > d and regions['fright'] > d:
         state_description = 'case 1 - nothing'
@@ -79,23 +104,24 @@ def take_action():
     else:
         state_description = 'unknown case'
         rospy.loginfo(regions)
+    print state_description
 
 def find_wall():
     msg = Twist()
-    msg.linear.x = 0.2
-    msg.angular.z = -0.3
+    msg.linear.x = 0.03
+    msg.angular.z = -0.09
     return msg
 
 def turn_left():
     msg = Twist()
-    msg.angular.z = 0.3
+    msg.angular.z = 0.09
     return msg
 
 def follow_the_wall():
     global regions_
     
     msg = Twist()
-    msg.linear.x = 0.5
+    msg.linear.x = 0.06
     return msg
 
 def main():
@@ -111,6 +137,7 @@ def main():
     while not rospy.is_shutdown():
         msg = Twist()
         if state_ == 0:
+            print "Finding wall"
             msg = find_wall()
         elif state_ == 1:
             msg = turn_left()
@@ -119,7 +146,8 @@ def main():
             pass
         else:
             rospy.logerr('Unknown state!')
-        
+        print state_
+#        print msg
         pub_.publish(msg)
         
         rate.sleep()
